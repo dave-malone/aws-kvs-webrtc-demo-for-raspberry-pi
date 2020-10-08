@@ -1,0 +1,8 @@
+iot/certs/
+iot/cmd-responses/
+iot/thing-name
+iot/credential-provider-endpoint
+iot/role-alias
+
+aws-kvs-webrtc-react-amplified/
+amazon-kinesis-video-streams-webrtc-sdk-c/
