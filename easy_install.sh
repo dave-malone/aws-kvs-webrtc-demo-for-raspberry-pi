@@ -1,7 +1,7 @@
 #!/bin/bash
 
-if [[ -z $AWS_ACCESS_KEY_ID || -z $AWS_SECRET_ACCESS_KEY ]]; then
-  echo 'AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY must be set'
+if [[ -z $AWS_ACCESS_KEY_ID || -z $AWS_SECRET_ACCESS_KEY || -z $AWS_DEFAULT_REGION ]]; then
+  echo 'AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY and AWS_DEFAULT_REGION must be set'
   exit 1
 fi
 
@@ -16,7 +16,7 @@ cd ..
 # generate run-kvs-webrtc.sh using outputs from previous setps
 
 cat > run-kvs-webrtc.sh <<EOF
-export AWS_DEFAULT_REGION=us-east-1
+export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
 
 export AWS_IOT_CREDENTIALS_ENDPOINT=`cat ./iot/credential-provider-endpoint`
 export AWS_IOT_ROLE_ALIAS=`cat ./iot/role-alias`

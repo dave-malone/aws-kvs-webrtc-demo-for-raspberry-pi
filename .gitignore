@@ -10,3 +10,5 @@ amazon-kinesis-video-streams-webrtc-sdk-c/
 *.bak
 
 run-kvs-webrtc.sh
+
+scratch.md
