@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "installing amazon-kinesis-video-streams-webrtc-sdk-c run time dependencies"
+echo "installing amazon-kinesis-video-streams-webrtc-sdk-c runtime dependencies"
 sudo apt-get install -y \
   pkg-config \
   libgstreamer1.0-0 \
