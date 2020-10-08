@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# TODO - check for AWS_ACCESS_KEY and AWS_SECRET env vars; fail if not set 
+
 ./install-aws-cli.sh
 ./build-kvs-webrtc.sh
 
