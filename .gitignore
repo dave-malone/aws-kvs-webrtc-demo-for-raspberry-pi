@@ -8,3 +8,5 @@ aws-kvs-webrtc-react-amplified/
 amazon-kinesis-video-streams-webrtc-sdk-c/
 
 *.bak
+
+run-kvs-webrtc.sh
