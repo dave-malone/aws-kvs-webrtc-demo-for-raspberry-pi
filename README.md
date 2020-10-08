@@ -24,4 +24,6 @@ cd aws-kvs-webrtc-demo-for-raspberry-pi
 ./easy_install.sh
 ```
 
-Upon successful completion, a script named `run-kvs-webrtc.sh` will have been generated, which can be used to launch the KVS WebRTC sample applications. 
+Upon successful completion, a script named `run-kvs-webrtc.sh` will have been generated, which can be used to launch the KVS WebRTC sample applications.
+
+In order to execute `run-kvs-webrtc.sh`, you will need to first run `chmod +x ./run-kvs-webrtc.sh`

@@ -16,8 +16,8 @@ echo -n "Enter a Name for your IoT Thing, followed by [ENTER]: "
 read THING_NAME
 
 echo "Using $THING_NAME as IoT Thing Name"
-echo "$THING_NAME" >> thing-name
-echo "$IOT_ROLE_ALIAS" >> role-alias
+echo "$THING_NAME" > thing-name
+echo "$IOT_ROLE_ALIAS" > role-alias
 
 # create thing type and thing
 if aws iot describe-thing-type --thing-type-name $THING_TYPE 2>&1 | grep -q 'ResourceNotFoundException'; then
@@ -114,4 +114,4 @@ if [ ! -f "credential-provider-endpoint" ]; then
     --output text > ./credential-provider-endpoint
 fi
 
-IOT_GET_CREDENTIAL_ENDPOINT=`cat ./credential-provider-endpoint`
+IOT_CREDENTIAL_PROVIDER_ENDPOINT=`cat ./credential-provider-endpoint`
