@@ -2,7 +2,6 @@
 
 echo "installing amazon-kinesis-video-streams-webrtc-sdk-c runtime dependencies"
 sudo apt-get install -y \
-  pkg-config \
   libgstreamer1.0-0 \
   gstreamer1.0-plugins-base \
   gstreamer1.0-libav \
