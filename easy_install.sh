@@ -27,5 +27,10 @@ export IOT_CA_CERT_PATH=$PWD/iot/certs/root-CA.crt
 export AWS_KVS_CACERT_PATH=$PWD/amazon-kinesis-video-streams-webrtc-sdk-c/certs/cert.pem
 
 export LD_LIBRARY_PATH=$PWD/amazon-kinesis-video-streams-webrtc-sdk-c/open-source/lib/:$PWD/amazon-kinesis-video-streams-webrtc-sdk-c/build/
-./amazon-kinesis-video-streams-webrtc-sdk-c/build/kvsWebrtcClientMasterGstSample `cat ./iot/thing-name`
+if [ -f ./amazon-kinesis-video-streams-webrtc-sdk-c/build/kvsWebrtcClientMasterGstSample ]
+then
+  ./amazon-kinesis-video-streams-webrtc-sdk-c/build/kvsWebrtcClientMasterGstSample `cat ./iot/thing-name`
+else
+  ./amazon-kinesis-video-streams-webrtc-sdk-c/build/samples/kvsWebrtcClientMasterGstSample `cat ./iot/thing-name`
+fi
 EOF
