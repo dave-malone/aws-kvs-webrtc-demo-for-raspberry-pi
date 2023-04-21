@@ -43,3 +43,10 @@ Upon successful completion, a script named `run-kvs-webrtc.sh` will have been ge
 In order to execute `run-kvs-webrtc.sh`, you will need to make the file executable, like this: `chmod +x ./run-kvs-webrtc.sh`
 
 Once the demo program is working, you can login to your AWS Console, navigate to Kinesis Video Streams > Signaling channels, and click the link for the signaling channel with the same name you provided to your IoT Thing during the `easy_install` process. This will allow you to view your camera's live feed in the browser to verify that everything is working as expected.
+
+You can replace the default Amazon KVS for WebRTC library and specify a specific branch by setting the optional environment variables below:
+
+```
+export AWS_KVS_WEBRTC_SDK= <git clone url for SDK>
+export AWS_KVS_WEBRTC_SDK_BRANCH= <git branch name for SDK>
+```
