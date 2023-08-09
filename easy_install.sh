@@ -11,14 +11,13 @@ sudo apt-get install -y jq zip pkg-config cmake
 echo "making kvs webrtc directories"
 export KVS_WEBRTC_HOME=/opt/amazon-kinesis-video-streams-webrtc-sdk-c
 sudo mkdir -p $KVS_WEBRTC_HOME
-sudo mkdir -p $KVS_WEBRTC_HOME/iot/cmd-responses
-sudo mkdir -p $KVS_WEBRTC_HOME/iot/certs
 
 ./install-aws-cli.sh
 ./build-kvs-webrtc.sh
 
-cd ./iot
-./provision-thing.sh
-cd ..
+./iot/provision-thing.sh
+
+echo "moving amazon-kinesis-video-streams-webrtc-sdk-c to /opt/"
+sudo mv -r ./amazon-kinesis-video-streams-webrtc-sdk-c/* $KVS_WEBRTC_HOME
 
 ./install-kvs-webrtc-service.sh

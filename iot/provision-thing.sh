@@ -6,6 +6,13 @@ IAM_POLICY=KVSCameraIAMPolicy
 IOT_ROLE_ALIAS=KvsCameraIoTRoleAlias
 IOT_POLICY=KvsCameraIoTPolicy
 
+KVS_IOT_DIR=./amazon-kinesis-video-streams-webrtc-sdk-c/iot/
+CMD_RESULTS_DIR=$KVS_IOT_DIR/cmd-responses
+CERTS_DIR=$KVS_IOT_DIR/certs
+
+mkdir -p $CMD_RESULTS_DIR
+mkdir -p $CERTS_DIR
+
 # prompt for thing name
 echo -n "Enter a Name for your IoT Thing, followed by [ENTER]: "
 read THING_NAME
@@ -31,9 +38,9 @@ fi
 if aws iam get-role --role-name $IAM_ROLE 2>&1 | grep -q 'NoSuchEntity'; then
   echo "IAM Role $IAM_ROLE does not exist; creating now..."
   aws iam create-role --role-name $IAM_ROLE \
-    --assume-role-policy-document 'file://iam-policy-document.json' > $KVS_WEBRTC_HOME/iot/cmd-responses/iam-role.json
+    --assume-role-policy-document 'file://iam-policy-document.json' > $CMD_RESULTS_DIR/iam-role.json
 else
-  aws iam get-role --role-name $IAM_ROLE > $KVS_WEBRTC_HOME/iot/cmd-responses/iam-role.json
+  aws iam get-role --role-name $IAM_ROLE > $CMD_RESULTS_DIR/iam-role.json
 fi
 
 if aws iam get-role-policy --role-name $IAM_ROLE --policy-name $IAM_POLICY 2>&1 | grep -q 'NoSuchEntity'; then
@@ -45,10 +52,10 @@ fi
 if aws iot describe-role-alias --role-alias $IOT_ROLE_ALIAS 2>&1 | grep -q 'ResourceNotFoundException'; then
   echo "IoT Role Alias $IOT_ROLE_ALIAS does not exist; creating now..."
   aws iot create-role-alias --role-alias $IOT_ROLE_ALIAS \
-    --role-arn $(jq --raw-output '.Role.Arn' $KVS_WEBRTC_HOME/iot/cmd-responses/iam-role.json) \
-    --credential-duration-seconds 3600 > $KVS_WEBRTC_HOME/iot/cmd-responses/iot-role-alias.json
+    --role-arn $(jq --raw-output '.Role.Arn' $CMD_RESULTS_DIR/iam-role.json) \
+    --credential-duration-seconds 3600 > $CMD_RESULTS_DIR/iot-role-alias.json
 else
-  aws iot describe-role-alias --role-alias $IOT_ROLE_ALIAS  > $KVS_WEBRTC_HOME/iot/cmd-responses/iot-role-alias.json
+  aws iot describe-role-alias --role-alias $IOT_ROLE_ALIAS  > $CMD_RESULTS_DIR/iot-role-alias.json
 fi
 
 if aws iot get-policy --policy-name $IOT_POLICY 2>&1 | grep -q 'ResourceNotFoundException'; then
@@ -62,14 +69,14 @@ cat > iot-policy-document.json <<EOF
 	 "Action":[
 	    "iot:Connect"
 	 ],
-	 "Resource":"$(jq --raw-output '.roleAliasArn' $KVS_WEBRTC_HOME/iot/cmd-responses/iot-role-alias.json)"
+	 "Resource":"$(jq --raw-output '.roleAliasArn' $CMD_RESULTS_DIR/iot-role-alias.json)"
  },
       {
 	 "Effect":"Allow",
 	 "Action":[
 	    "iot:AssumeRoleWithCertificate"
 	 ],
-	 "Resource":"$(jq --raw-output '.roleAliasArn' $KVS_WEBRTC_HOME/iot/cmd-responses/iot-role-alias.json)"
+	 "Resource":"$(jq --raw-output '.roleAliasArn' $CMD_RESULTS_DIR/iot-role-alias.json)"
  }
    ]
 }
@@ -81,32 +88,32 @@ fi
 
 # create keys and certificate
 # certs to be saved in:
-# $KVS_WEBRTC_HOME/iot/certs/device.cert.pem
-# $KVS_WEBRTC_HOME/iot/certs/device.private.key
-# $KVS_WEBRTC_HOME/iot/certs/root-CA.crt
+# $CERTS_DIR/device.cert.pem
+# $CERTS_DIR/device.private.key
+# $CERTS_DIR/root-CA.crt
 
-if [ ! -f "$KVS_WEBRTC_HOME/iot/certs/root-CA.crt" ]; then
+if [ ! -f "$CERTS_DIR/root-CA.crt" ]; then
   curl --silent 'https://www.amazontrust.com/repository/SFSRootCAG2.pem' \
-    --output $KVS_WEBRTC_HOME/iot/certs/root-CA.crt
+    --output $CERTS_DIR/root-CA.crt
 fi
 
-if [ ! -f "$KVS_WEBRTC_HOME/iot/certs/device.cert.pem" ]; then
+if [ ! -f "$CERTS_DIR/device.cert.pem" ]; then
   aws iot create-keys-and-certificate --set-as-active \
-    --certificate-pem-outfile $KVS_WEBRTC_HOME/iot/certs/device.cert.pem \
-    --public-key-outfile $KVS_WEBRTC_HOME/iot/certs/device.public.key \
-    --private-key-outfile $KVS_WEBRTC_HOME/iot/certs/device.private.key > $KVS_WEBRTC_HOME/iot/cmd-responses/keys-and-certificate.json
+    --certificate-pem-outfile $CERTS_DIR/device.cert.pem \
+    --public-key-outfile $CERTS_DIR/device.public.key \
+    --private-key-outfile $CERTS_DIR/device.private.key > $CMD_RESULTS_DIR/keys-and-certificate.json
 
   aws iot attach-policy --policy-name $IOT_POLICY \
-    --target $(jq --raw-output '.certificateArn' $KVS_WEBRTC_HOME/iot/cmd-responses/keys-and-certificate.json)
+    --target $(jq --raw-output '.certificateArn' $CMD_RESULTS_DIR/keys-and-certificate.json)
 
   aws iot attach-thing-principal --thing-name $THING_NAME \
-    --principal $(jq --raw-output '.certificateArn' $KVS_WEBRTC_HOME/iot/cmd-responses/keys-and-certificate.json)
+    --principal $(jq --raw-output '.certificateArn' $CMD_RESULTS_DIR/keys-and-certificate.json)
 fi
 
 # get credential provider endpoint
 if [ ! -f "credential-provider-endpoint" ]; then
   aws iot describe-endpoint --endpoint-type iot:CredentialProvider \
-    --output text > $KVS_WEBRTC_HOME/iot/credential-provider-endpoint
+    --output text > ./credential-provider-endpoint
 fi
 
-IOT_CREDENTIAL_PROVIDER_ENDPOINT=`cat $KVS_WEBRTC_HOME/iot/credential-provider-endpoint`
+IOT_CREDENTIAL_PROVIDER_ENDPOINT=`cat ./credential-provider-endpoint`

@@ -21,6 +21,3 @@ cmake .. -DUSE_MBEDTLS=ON -DUSE_OPENSSL=OFF
 make
 
 cd ../..
-
-echo "moving amazon-kinesis-video-streams-webrtc-sdk-c to /opt/"
-sudo mv -r ./amazon-kinesis-video-streams-webrtc-sdk-c/* $KVS_WEBRTC_HOME
