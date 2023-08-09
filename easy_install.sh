@@ -5,6 +5,14 @@ if [[ -z $AWS_ACCESS_KEY_ID || -z $AWS_SECRET_ACCESS_KEY || -z $AWS_DEFAULT_REGI
   exit 1
 fi
 
+export THING_NAME=$1
+
+if [[ -z $THING_NAME ]]
+  # prompt for thing name
+  echo -n "Enter a Name for your IoT Thing: "
+  read THING_NAME
+fi 
+
 echo "installing build dependencies"
 sudo apt-get install -y jq zip pkg-config cmake
 

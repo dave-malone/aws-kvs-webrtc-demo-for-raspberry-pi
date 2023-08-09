@@ -13,10 +13,6 @@ CERTS_DIR=$KVS_IOT_DIR/certs
 mkdir -p $CMD_RESULTS_DIR
 mkdir -p $CERTS_DIR
 
-# prompt for thing name
-echo -n "Enter a Name for your IoT Thing, followed by [ENTER]: "
-read THING_NAME
-
 echo "Using $THING_NAME as IoT Thing Name"
 echo "$THING_NAME" > $KVS_IOT_DIR/thing-name
 echo "$IOT_ROLE_ALIAS" > $KVS_IOT_DIR/role-alias
