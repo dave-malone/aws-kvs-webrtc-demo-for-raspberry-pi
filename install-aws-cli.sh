@@ -1,11 +1,9 @@
 #!/bin/bash
 
 if ! type "aws" > /dev/null; then
-  curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
-  unzip awscliv2.zip
-  sudo ./aws/install
-  rm -rf ./aws
-  rm -f awscliv2.zip
+  sudo apt-get install python3-pip -y
+  echo "installing the awscli"
+  sudo pip3 install --upgrade awscli
 fi
 
 aws --version
