@@ -22,11 +22,10 @@ sudo apt-get install -y \
 mkdir -p amazon-kinesis-video-streams-webrtc-sdk-c/build
 cd amazon-kinesis-video-streams-webrtc-sdk-c/build
 
-cmake .. -DBUILD_TEST=TRUE
+cmake .. -DBUILD_TEST=TRUE -DBUILD_DEPENDENCIES=FALSE
 make
 
-mkdir -p /opt/
-
-mv amazon-kinesis-video-streams-webrtc-sdk-c/ /opt/
+sudo mkdir -p /opt/
+sudo cp -r amazon-kinesis-video-streams-webrtc-sdk-c/ /opt/
 
 cd ../..

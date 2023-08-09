@@ -1,4 +1,4 @@
-cp ./kvs-webrtc.service /etc/systemd/system/kvs-webrtc.service
+sudo cp ./kvs-webrtc.service /etc/systemd/system/kvs-webrtc.service
 
 # generate run-kvs-webrtc.sh using outputs from previous setps
 
