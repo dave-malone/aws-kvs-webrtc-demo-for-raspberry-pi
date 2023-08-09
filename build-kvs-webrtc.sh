@@ -2,9 +2,6 @@
 
 echo "installing amazon-kinesis-video-streams-webrtc-sdk-c build dependencies"
 sudo apt-get install -y \
-  pkg-config \
-  cmake \
-  zip \
   libssl-dev \
   libmbedtls-dev \
   libcurl4-openssl-dev \

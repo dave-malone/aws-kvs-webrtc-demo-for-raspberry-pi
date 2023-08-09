@@ -1,8 +1,7 @@
 sudo cp ./kvs-webrtc.service /etc/systemd/system/kvs-webrtc.service
 
 # generate run-kvs-webrtc.sh using outputs from previous setps
-
-cat > $KVS_WEBRTC_HOME/run-kvs-webrtc-client-master-sample.sh <<EOF
+cat > ./run-kvs-webrtc-client-master-sample.sh <<EOF
 export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
 
 export AWS_IOT_CREDENTIALS_ENDPOINT=`cat $KVS_WEBRTC_HOME/iot/credential-provider-endpoint`
@@ -19,7 +18,8 @@ export AWS_KVS_LOG_LEVEL=1
 `$KVS_WEBRTC_HOME/build/samples/kvsWebrtcClientMasterGstSample` `cat $KVS_WEBRTC_HOME/iot/thing-name`
 EOF
 
-sudo chmod 755 $KVS_WEBRTC_HOME/run-kvs-webrtc-client-master-sample.sh
+sudo chmod 755 ./run-kvs-webrtc-client-master-sample.sh
+sudo mv ./run-kvs-webrtc-client-master-sample.sh $KVS_WEBRTC_HOME/
 
 sudo systemctl daemon-reload
 sudo systemctl enable kvs-webrtc.service

@@ -1,7 +1,5 @@
 #!/bin/bash
 
-sudo apt-get install -y jq
-
 THING_TYPE=kvs_example_camera
 IAM_ROLE=KVSCameraCertificateBasedIAMRole
 IAM_POLICY=KVSCameraIAMPolicy
