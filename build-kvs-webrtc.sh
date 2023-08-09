@@ -23,7 +23,7 @@ cd amazon-kinesis-video-streams-webrtc-sdk-c/build
 cmake .. -DUSE_MBEDTLS=ON -DUSE_OPENSSL=OFF
 make
 
-sudo mkdir -p /opt/amazon-kinesis-video-streams-webrtc-sdk-c
-sudo cp -r amazon-kinesis-video-streams-webrtc-sdk-c/* /opt/amazon-kinesis-video-streams-webrtc-sdk-c/
-
 cd ../..
+
+sudo mkdir -p /opt/amazon-kinesis-video-streams-webrtc-sdk-c
+sudo cp -r ./amazon-kinesis-video-streams-webrtc-sdk-c/* /opt/amazon-kinesis-video-streams-webrtc-sdk-c/
