@@ -7,7 +7,7 @@ fi
 
 export THING_NAME=$1
 
-if [[ -z $THING_NAME ]]
+if [[ -z $THING_NAME ]]; then
   # prompt for thing name
   echo -n "Enter a Name for your IoT Thing: "
   read THING_NAME
