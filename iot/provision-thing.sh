@@ -6,7 +6,7 @@ IAM_POLICY=KVSCameraIAMPolicy
 IOT_ROLE_ALIAS=KvsCameraIoTRoleAlias
 IOT_POLICY=KvsCameraIoTPolicy
 
-KVS_IOT_DIR=./amazon-kinesis-video-streams-webrtc-sdk-c/iot/
+KVS_IOT_DIR=./amazon-kinesis-video-streams-webrtc-sdk-c/iot
 CMD_RESULTS_DIR=$KVS_IOT_DIR/cmd-responses
 CERTS_DIR=$KVS_IOT_DIR/certs
 
