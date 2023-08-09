@@ -8,11 +8,6 @@ IAM_POLICY=KVSCameraIAMPolicy
 IOT_ROLE_ALIAS=KvsCameraIoTRoleAlias
 IOT_POLICY=KvsCameraIoTPolicy
 
-KVS_WEBRTC_HOME=/opt/amazon-kinesis-video-streams-webrtc-sdk-c
-
-mkdir -p $KVS_WEBRTC_HOME/iot/cmd-responses
-mkdir -p $KVS_WEBRTC_HOME/iot/certs
-
 # prompt for thing name
 echo -n "Enter a Name for your IoT Thing, followed by [ENTER]: "
 read THING_NAME

@@ -5,6 +5,11 @@ if [[ -z $AWS_ACCESS_KEY_ID || -z $AWS_SECRET_ACCESS_KEY || -z $AWS_DEFAULT_REGI
   exit 1
 fi
 
+export KVS_WEBRTC_HOME=/opt/amazon-kinesis-video-streams-webrtc-sdk-c
+sudo mkdir -p $KVS_WEBRTC_HOME
+sudo mkdir -p $KVS_WEBRTC_HOME/iot/cmd-responses
+sudo mkdir -p $KVS_WEBRTC_HOME/iot/certs
+
 ./install-aws-cli.sh
 ./build-kvs-webrtc.sh
 

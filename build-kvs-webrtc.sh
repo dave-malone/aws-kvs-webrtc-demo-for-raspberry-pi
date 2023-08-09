@@ -25,5 +25,5 @@ make
 
 cd ../..
 
-sudo mkdir -p /opt/amazon-kinesis-video-streams-webrtc-sdk-c
-sudo cp -r ./amazon-kinesis-video-streams-webrtc-sdk-c/* /opt/amazon-kinesis-video-streams-webrtc-sdk-c/
+echo "moving amazon-kinesis-video-streams-webrtc-sdk-c to /opt/"
+sudo mv -r ./amazon-kinesis-video-streams-webrtc-sdk-c/* $KVS_WEBRTC_HOME
