@@ -37,9 +37,11 @@ Clone this repo:
 
 Run the easy install script. Please note that this script will install packages on your Raspberry Pi, will clone and build the amazon-kinesis-video-streams-webrtc-sdk-c, and will also provision AWS Cloud resources on your behalf. Installing packages and building the webrtc sdk will take some time, so please be patient.
 
+The `easy_install` script can be passed the AWS IoT Core Thing Name as an argument. If you do not set this, the script will prompt and wait for you to enter a Thing Name before proceeding. 
+
 ```
 cd aws-kvs-webrtc-demo-for-raspberry-pi
-./easy_install.sh
+./easy_install.sh YOUR_THING_NAME
 ```
 
 Upon successful completion, a new service named `kvs-webrtc.service` will be registered. You can check the status of this service by running the following command: `sudo systemctl start kvs-webrtc.service`. The sample applications have been installed under `/opt/amazon-kinesis-video-streams-webrtc-sdk-c`. 
