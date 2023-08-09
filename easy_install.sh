@@ -26,6 +26,9 @@ export IOT_PRIVATE_KEY_PATH=$PWD/iot/certs/device.private.key
 export IOT_CA_CERT_PATH=$PWD/iot/certs/root-CA.crt
 export AWS_KVS_CACERT_PATH=$PWD/amazon-kinesis-video-streams-webrtc-sdk-c/certs/cert.pem
 
+export DEBUG_LOG_SDP=TRUE
+export AWS_KVS_LOG_LEVEL=1
+
 export LD_LIBRARY_PATH=$PWD/amazon-kinesis-video-streams-webrtc-sdk-c/open-source/lib/:$PWD/amazon-kinesis-video-streams-webrtc-sdk-c/build/
 ./amazon-kinesis-video-streams-webrtc-sdk-c/build/kvsWebrtcClientMasterGstSample `cat ./iot/thing-name`
 EOF
