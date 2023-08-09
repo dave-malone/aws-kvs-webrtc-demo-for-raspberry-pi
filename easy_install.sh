@@ -26,7 +26,8 @@ sudo mkdir -p $KVS_WEBRTC_HOME
 ./iot/provision-thing.sh
 
 # generate run-kvs-webrtc.sh using outputs from previous setps
-cat > ./amazon-kinesis-video-streams-webrtc-sdk-c/run-kvs-webrtc-client-master-sample.sh <<EOF
+echo "generating run-kvs-webrtc-client-master-sample.sh under $(pwd)/amazon-kinesis-video-streams-webrtc-sdk-c"
+cat > $(pwd)/amazon-kinesis-video-streams-webrtc-sdk-c/run-kvs-webrtc-client-master-sample.sh <<EOF
 export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
 
 export AWS_IOT_CREDENTIALS_ENDPOINT=`cat $(pwd)/amazon-kinesis-video-streams-webrtc-sdk-c/iot/credential-provider-endpoint`
@@ -43,9 +44,9 @@ export AWS_KVS_LOG_LEVEL=1
 `$KVS_WEBRTC_HOME`/build/samples/kvsWebrtcClientMasterGstSample `cat $(pwd)/amazon-kinesis-video-streams-webrtc-sdk-c/iot/thing-name`
 EOF
 
-sudo chmod 755 ./run-kvs-webrtc-client-master-sample.sh
+sudo chmod 755 ./amazon-kinesis-video-streams-webrtc-sdk-c/run-kvs-webrtc-client-master-sample.sh
 
 echo "moving amazon-kinesis-video-streams-webrtc-sdk-c to /opt/"
-sudo mv ./amazon-kinesis-video-streams-webrtc-sdk-c/* $KVS_WEBRTC_HOME
+sudo cp -r $(pwd)/amazon-kinesis-video-streams-webrtc-sdk-c/* $KVS_WEBRTC_HOME
 
 ./install-kvs-webrtc-service.sh
