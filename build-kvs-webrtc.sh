@@ -16,8 +16,8 @@ sudo apt-get install -y \
   gstreamer1.0-plugins-ugly \
   gstreamer1.0-tools
 
-echo "cloning the amazon-kinesis-video-streams-webrtc-sdk-c repository"
-git clone --recursive https://github.com/dave-malone/amazon-kinesis-video-streams-webrtc-sdk-c
+# echo "cloning the amazon-kinesis-video-streams-webrtc-sdk-c repository"
+# git clone --recursive https://github.com/dave-malone/amazon-kinesis-video-streams-webrtc-sdk-c
 
 mkdir -p amazon-kinesis-video-streams-webrtc-sdk-c/build
 cd amazon-kinesis-video-streams-webrtc-sdk-c/build
@@ -25,6 +25,8 @@ cd amazon-kinesis-video-streams-webrtc-sdk-c/build
 cmake .. -DBUILD_TEST=TRUE
 make
 
-cd ../..
+mkdir -p /opt/
 
-# zip -r kvs-webrtc-sdk-c-build ./build/* ./open-source/lib/* ./certs/*
+mv amazon-kinesis-video-streams-webrtc-sdk-c/ /opt/
+
+cd ../..

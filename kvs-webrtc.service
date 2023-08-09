@@ -1,5 +1,5 @@
 [Unit]
-Description=KVS WebRTC sample application service
+Description=Amazon Kinesis Video Streams for WebRTC sample camera application
 After=network.target
 StartLimitIntervalSec=0
 [Service]
@@ -7,7 +7,7 @@ Type=simple
 Restart=always
 RestartSec=1
 User=ubuntu
-ExecStart=/home/pi/amazon-kinesis-video-streams-webrtc-sdk-c/run-kvs-webrtc.sh
+ExecStart=/opt/amazon-kinesis-video-streams-webrtc-sdk-c/run-kvs-webrtc-client-master-sample.sh
  
 [Install]
 WantedBy=multi-user.target

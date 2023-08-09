@@ -12,23 +12,4 @@ cd ./iot
 ./provision-thing.sh
 cd ..
 
-
-# generate run-kvs-webrtc.sh using outputs from previous setps
-
-cat > run-kvs-webrtc.sh <<EOF
-export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
-
-export AWS_IOT_CREDENTIALS_ENDPOINT=`cat ./iot/credential-provider-endpoint`
-export AWS_IOT_ROLE_ALIAS=`cat ./iot/role-alias`
-
-export IOT_CERT_PATH=$PWD/iot/certs/device.cert.pem
-export IOT_PRIVATE_KEY_PATH=$PWD/iot/certs/device.private.key
-export IOT_CA_CERT_PATH=$PWD/iot/certs/root-CA.crt
-export AWS_KVS_CACERT_PATH=$PWD/amazon-kinesis-video-streams-webrtc-sdk-c/certs/cert.pem
-
-export DEBUG_LOG_SDP=TRUE
-export AWS_KVS_LOG_LEVEL=1
-
-export LD_LIBRARY_PATH=$PWD/amazon-kinesis-video-streams-webrtc-sdk-c/open-source/lib/:$PWD/amazon-kinesis-video-streams-webrtc-sdk-c/build/
-./amazon-kinesis-video-streams-webrtc-sdk-c/build/kvsWebrtcClientMasterGstSample `cat ./iot/thing-name`
-EOF
+./install-kvs-webrtc-service.sh
