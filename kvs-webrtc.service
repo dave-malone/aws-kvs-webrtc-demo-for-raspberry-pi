@@ -2,12 +2,15 @@
 Description=Amazon Kinesis Video Streams for WebRTC sample camera application
 After=network.target
 StartLimitIntervalSec=0
+
 [Service]
 Type=simple
 Restart=always
 RestartSec=1
-User=ubuntu
+User=pi 
 ExecStart=/opt/amazon-kinesis-video-streams-webrtc-sdk-c/run-kvs-webrtc-client-master-sample.sh
+StandardOutput=append:/var/log/kvs-webrtc.log
+StandardError=append:/var/log/kvs-webrtc.log
  
 [Install]
 WantedBy=multi-user.target
