@@ -16,6 +16,8 @@ sudo apt-get install -y \
 
 # TODO find and uncomment this line prior to build: https://github.com/awslabs/amazon-kinesis-video-streams-webrtc-sdk-c/blob/master/samples/Samples.h#L53
 
+sed -i 's+//#define IOT_CORE_ENABLE_CREDENTIALS  1+#define IOT_CORE_ENABLE_CREDENTIALS  1+g' amazon-kinesis-video-streams-webrtc-sdk-c/samples/Samples.h
+
 mkdir -p amazon-kinesis-video-streams-webrtc-sdk-c/build
 cd amazon-kinesis-video-streams-webrtc-sdk-c/build
 
