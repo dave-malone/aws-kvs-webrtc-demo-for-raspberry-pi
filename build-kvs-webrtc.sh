@@ -14,8 +14,12 @@ sudo apt-get install -y \
   gstreamer1.0-plugins-ugly \
   gstreamer1.0-tools
 
-# TODO find and uncomment this line prior to build: https://github.com/awslabs/amazon-kinesis-video-streams-webrtc-sdk-c/blob/master/samples/Samples.h#L53
+# patch CMakeLists.txt; don't build openssl or mbedtls since those are installed via package manager
+sed -i 's+build_dependency(openssl ${BUILD_ARGS})+#build_dependency(openssl ${BUILD_ARGS})+g' amazon-kinesis-video-streams-webrtc-sdk-c/CMakeLists.txt
+sed -i 's+set(OPENSSL_ROOT_DIR ${OPEN_SRC_INSTALL_PREFIX})+#set(OPENSSL_ROOT_DIR ${OPEN_SRC_INSTALL_PREFIX})+g' amazon-kinesis-video-streams-webrtc-sdk-c/CMakeLists.txt
+sed -i 's+build_dependency(mbedtls ${BUILD_ARGS})+#build_dependency(mbedtls ${BUILD_ARGS})+g' amazon-kinesis-video-streams-webrtc-sdk-c/CMakeLists.txt
 
+# patch samples/Samples.h to enable IoT Core Credentials Provider
 sed -i 's+//#define IOT_CORE_ENABLE_CREDENTIALS  1+#define IOT_CORE_ENABLE_CREDENTIALS  1+g' amazon-kinesis-video-streams-webrtc-sdk-c/samples/Samples.h
 
 mkdir -p amazon-kinesis-video-streams-webrtc-sdk-c/build
