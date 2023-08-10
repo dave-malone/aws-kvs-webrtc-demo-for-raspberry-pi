@@ -2,13 +2,25 @@
 
 Demo assets and instructions to quickly get started with WebRTC using Amazon Kinesis Video Streams on Raspberry Pi devices.
 
-Requires an AWS account and a Raspberry Pi
+Requires an AWS account and a Raspberry Pi with a camera attached.
+
+## What does this repo do?
+
+This repository contains mostly bash scripts that you can use to build the [Amazon Kinesis Video Streams for WebRTC SDK for C](https://github.com/awslabs/amazon-kinesis-video-streams-webrtc-sdk-c). The scripts will perform the following tasks:
+
+* Installs the AWS CLI (used to help with initial AWS IoT Core provisioning)
+* Installs development and runtime dependencies for the SDK 
+* Patch some of the files in the SDK
+* Compiles the SDK and sample applications
+* Provision your Raspberry Pi as an AWS IoT Core Thing
+* Generates a "run" script for the SDK sample applications
+* Configures a systemctl service so the application can be managed via systemd services
 
 ## Raspberry Pi Setup
 
-Before you begin, if you are going to use a Raspberry Pi Camera, follow these instructions to first ensure that your camera is configured correctly:
+To begin, setup your Raspberry Pi. You can follow these instructions if you do not know how to perform the necessary steps: https://projects.raspberrypi.org/en/projects/raspberry-pi-setting-up. The easiest way to get started is to use the Raspberry Pi Imager, which is available for download here: https://www.raspberrypi.com/software/
 
-https://picamera.readthedocs.io/en/latest/quickstart.html
+Once you have your Raspberry Pi device configured and connected to your network, follow these instructions to ensure that your camera is configured correctly: https://picamera.readthedocs.io/en/latest/quickstart.html.
 
 Additionally, it is encouraged to update your Raspberry Pi and to verify that the git utility is installed prior to proceeding:
 
@@ -44,13 +56,18 @@ cd aws-kvs-webrtc-demo-for-raspberry-pi
 ./easy_install.sh YOUR_THING_NAME
 ```
 
-Upon successful completion, a new service named `kvs-webrtc.service` will be registered. 
+Upon successful completion, a new service named `kvs-webrtc.service` will be registered. You can check the status of this service by running the following command: 
+`sudo systemctl status kvs-webrtc.service`. 
 
-You can check the status of this service by running the following command: `sudo systemctl status kvs-webrtc.service`. 
-
-The sample applications have been installed under `/opt/amazon-kinesis-video-streams-webrtc-sdk-c`. 
+The sample applications have been installed under `/opt/amazon-kinesis-video-streams-webrtc-sdk-c`. The service will direct Stdout and Stderror logs to `/var/log/kvs-webrtc.log`, and service specific logs are in the usual `tail -f /var/log/syslog` file.
 
 Once the demo program is working, you can login to your AWS Console, navigate to Kinesis Video Streams > Signaling channels, and click the link for the signaling channel with the same name you provided to your IoT Thing during the `easy_install` process. This will allow you to view your camera's live feed in the browser to verify that everything is working as expected.
+
+## Test your camera device
+
+As long as your Raspberry Pi shows that the service is successfully running (see steps above), you can navigate to the KVS WebRTC Test Page, enter in your AWS region, AWS credentials, and the name of your device used in the previous steps, and click the "Start Viewer" button. If everything is working, you will be able to view a live feed from your camera!
+
+https://awslabs.github.io/amazon-kinesis-video-streams-webrtc-sdk-js/examples/index.html
 
 ## Clean up 
 
