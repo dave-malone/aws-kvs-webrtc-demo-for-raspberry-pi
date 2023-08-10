@@ -65,14 +65,14 @@ cat > iot-policy-document.json <<EOF
 	 "Action":[
 	    "iot:Connect"
 	 ],
-	 "Resource":"$(jq --raw-output '.roleAliasArn' $CMD_RESULTS_DIR/iot-role-alias.json)"
+	 "Resource":"$(jq --raw-output '.roleAliasDescription.roleAliasArn' $CMD_RESULTS_DIR/iot-role-alias.json)"
  },
       {
 	 "Effect":"Allow",
 	 "Action":[
 	    "iot:AssumeRoleWithCertificate"
 	 ],
-	 "Resource":"$(jq --raw-output '.roleAliasArn' $CMD_RESULTS_DIR/iot-role-alias.json)"
+	 "Resource":"$(jq --raw-output '.roleAliasDescription.roleAliasArn' $CMD_RESULTS_DIR/iot-role-alias.json)"
  }
    ]
 }
