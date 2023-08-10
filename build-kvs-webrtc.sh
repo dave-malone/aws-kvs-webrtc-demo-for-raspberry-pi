@@ -25,7 +25,6 @@ sed -i 's+//#define IOT_CORE_ENABLE_CREDENTIALS  1+#define IOT_CORE_ENABLE_CREDE
 mkdir -p amazon-kinesis-video-streams-webrtc-sdk-c/build
 cd amazon-kinesis-video-streams-webrtc-sdk-c/build
 
-#cmake .. -DUSE_MBEDTLS=ON -DUSE_OPENSSL=OFF
 cmake ..
 make
 
