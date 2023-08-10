@@ -14,10 +14,13 @@ sudo apt-get install -y \
   gstreamer1.0-plugins-ugly \
   gstreamer1.0-tools
 
+# TODO find and uncomment this line prior to build: https://github.com/awslabs/amazon-kinesis-video-streams-webrtc-sdk-c/blob/master/samples/Samples.h#L53
+
 mkdir -p amazon-kinesis-video-streams-webrtc-sdk-c/build
 cd amazon-kinesis-video-streams-webrtc-sdk-c/build
 
-cmake .. -DUSE_MBEDTLS=ON -DUSE_OPENSSL=OFF
+#cmake .. -DUSE_MBEDTLS=ON -DUSE_OPENSSL=OFF
+cmake ..
 make
 
 cd ../..

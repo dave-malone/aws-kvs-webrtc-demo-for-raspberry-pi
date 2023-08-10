@@ -44,7 +44,11 @@ cd aws-kvs-webrtc-demo-for-raspberry-pi
 ./easy_install.sh YOUR_THING_NAME
 ```
 
-Upon successful completion, a new service named `kvs-webrtc.service` will be registered. You can check the status of this service by running the following command: `sudo systemctl start kvs-webrtc.service`. The sample applications have been installed under `/opt/amazon-kinesis-video-streams-webrtc-sdk-c`. 
+Upon successful completion, a new service named `kvs-webrtc.service` will be registered. 
+
+You can check the status of this service by running the following command: `sudo systemctl status kvs-webrtc.service`. 
+
+The sample applications have been installed under `/opt/amazon-kinesis-video-streams-webrtc-sdk-c`. 
 
 Once the demo program is working, you can login to your AWS Console, navigate to Kinesis Video Streams > Signaling channels, and click the link for the signaling channel with the same name you provided to your IoT Thing during the `easy_install` process. This will allow you to view your camera's live feed in the browser to verify that everything is working as expected.
 
