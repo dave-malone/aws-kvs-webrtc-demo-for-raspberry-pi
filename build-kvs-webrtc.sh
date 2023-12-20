@@ -20,7 +20,7 @@ sed -i 's+set(OPENSSL_ROOT_DIR ${OPEN_SRC_INSTALL_PREFIX})+#set(OPENSSL_ROOT_DIR
 sed -i 's+build_dependency(mbedtls ${BUILD_ARGS})+#build_dependency(mbedtls ${BUILD_ARGS})+g' amazon-kinesis-video-streams-webrtc-sdk-c/CMakeLists.txt
 
 # patch samples/Samples.h to enable IoT Core Credentials Provider
-sed -i 's+//#define IOT_CORE_ENABLE_CREDENTIALS  1+#define IOT_CORE_ENABLE_CREDENTIALS  1+g' amazon-kinesis-video-streams-webrtc-sdk-c/samples/Samples.h
+sed -i 's+// #define IOT_CORE_ENABLE_CREDENTIALS  1+#define IOT_CORE_ENABLE_CREDENTIALS  1+g' amazon-kinesis-video-streams-webrtc-sdk-c/samples/Samples.h
 
 mkdir -p amazon-kinesis-video-streams-webrtc-sdk-c/build
 cd amazon-kinesis-video-streams-webrtc-sdk-c/build
