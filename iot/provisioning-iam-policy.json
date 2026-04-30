@@ -1,0 +1,58 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "IoTThingProvisioning",
+      "Effect": "Allow",
+      "Action": [
+        "iot:CreateThing",
+        "iot:CreateThingType",
+        "iot:DescribeThing",
+        "iot:DescribeThingType"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "IoTCertificateManagement",
+      "Effect": "Allow",
+      "Action": [
+        "iot:CreateKeysAndCertificate",
+        "iot:AttachPolicy",
+        "iot:AttachThingPrincipal"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "IoTPolicyAndRoleAlias",
+      "Effect": "Allow",
+      "Action": [
+        "iot:CreatePolicy",
+        "iot:GetPolicy",
+        "iot:CreateRoleAlias",
+        "iot:DescribeRoleAlias",
+        "iot:DescribeEndpoint"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "IAMRoleForIoT",
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreateRole",
+        "iam:GetRole",
+        "iam:PutRolePolicy",
+        "iam:GetRolePolicy",
+        "iam:PassRole"
+      ],
+      "Resource": "arn:aws:iam::<ACCOUNT_ID>:role/KVSCameraCertificateBasedIAMRole"
+    },
+    {
+      "Sid": "VerifyIdentity",
+      "Effect": "Allow",
+      "Action": [
+        "sts:GetCallerIdentity"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
