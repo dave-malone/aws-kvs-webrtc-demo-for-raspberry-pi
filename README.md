@@ -2,73 +2,309 @@
 
 Demo assets and instructions to quickly get started with WebRTC using Amazon Kinesis Video Streams on Raspberry Pi devices.
 
-Requires an AWS account and a Raspberry Pi with a camera attached.
-
 ## What does this repo do?
 
-This repository contains mostly bash scripts that you can use to build the [Amazon Kinesis Video Streams for WebRTC SDK for C](https://github.com/awslabs/amazon-kinesis-video-streams-webrtc-sdk-c). The scripts will perform the following tasks:
+This repository contains bash scripts that build the [Amazon Kinesis Video Streams for WebRTC SDK for C](https://github.com/awslabs/amazon-kinesis-video-streams-webrtc-sdk-c) and provision the necessary AWS resources. The scripts will:
 
-* Installs the AWS CLI (used to help with initial AWS IoT Core provisioning)
-* Installs development and runtime dependencies for the SDK 
-* Patch some of the files in the SDK
-* Compiles the SDK and sample applications
-* Provision your Raspberry Pi as an AWS IoT Core Thing
-* Generates a "run" script for the SDK sample applications
-* Configures a systemctl service so the application can be managed via systemd services
+* Provision your device as an AWS IoT Core Thing (with certificates, policies, and role aliases)
+* Install development and runtime dependencies for the SDK on the Pi
+* Build libwebsockets from source (the SDK requires v4.3.5; Raspberry Pi OS Bookworm ships 4.1.6)
+* Compile the SDK with `BUILD_DEPENDENCIES=OFF` using system packages where possible
+* Generate a "run" script for the SDK sample applications
+* Configure a systemd service so the application runs automatically
 
-## Raspberry Pi Setup
+There are two ways to use this repo:
 
-To begin, setup your Raspberry Pi. You can follow these instructions if you do not know how to perform the necessary steps: https://projects.raspberrypi.org/en/projects/raspberry-pi-setting-up. The easiest way to get started is to use the Raspberry Pi Imager, which is available for download here: https://www.raspberrypi.com/software/
+1. **Local-to-Remote (recommended)** — Run provisioning from your laptop/desktop, deploy to the Pi over SSH
+2. **All-on-Pi (legacy)** — Run everything directly on the Raspberry Pi
 
-Once you have your Raspberry Pi device configured and connected to your network, follow these instructions to ensure that your camera is configured correctly: https://picamera.readthedocs.io/en/latest/quickstart.html.
+## Prerequisites
 
-Additionally, it is encouraged to update your Raspberry Pi and to verify that the git utility is installed prior to proceeding:
+Before using this repo, you need:
 
+1. **An AWS account** with permissions to create IoT and IAM resources (see [Minimum IAM permissions](#minimum-iam-permissions) below)
+2. **A Raspberry Pi** with:
+   - Raspberry Pi OS installed ([setup guide](https://projects.raspberrypi.org/en/projects/raspberry-pi-setting-up), [Raspberry Pi Imager](https://www.raspberrypi.com/software/))
+   - A camera module attached and enabled ([camera setup](https://picamera.readthedocs.io/en/latest/quickstart.html))
+   - Connected to a network reachable from your local machine
+   - SSH enabled with key-based authentication (e.g. `ssh pi@192.168.1.100`)
+   - Updated packages and git installed:
+     ```bash
+     sudo apt update && sudo apt install git -y
+     ```
+3. **On your local machine** (laptop/desktop):
+   - [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
+   - `jq` (`brew install jq` on macOS, `apt install jq` on Linux)
+   - SSH key-based access to the Pi
+
+## Minimum IAM permissions
+
+The provisioning scripts do not require administrator access. A minimal IAM policy is provided in [`iot/provisioning-iam-policy.json`](iot/provisioning-iam-policy.json). Before using it, replace `<ACCOUNT_ID>` with your AWS account ID.
+
+The policy grants permissions for:
+
+| Service | Actions | Purpose |
+|---|---|---|
+| IoT | CreateThing, CreateThingType, DescribeThing, DescribeThingType | Register the Pi as an IoT Thing |
+| IoT | CreateKeysAndCertificate, AttachPolicy, AttachThingPrincipal | Create and attach device certificates |
+| IoT | CreatePolicy, GetPolicy, CreateRoleAlias, DescribeRoleAlias, DescribeEndpoint | Set up IoT credential provider |
+| IAM | CreateRole, GetRole, PutRolePolicy, GetRolePolicy, PassRole | Create the role that IoT assumes for KVS access |
+| STS | GetCallerIdentity | Verify the active AWS session |
+
+You can create this policy in the AWS Console under IAM > Policies > Create Policy (JSON tab), or via the CLI:
+
+```bash
+aws iam create-policy \
+  --policy-name KVSWebRTCProvisioningPolicy \
+  --policy-document file://iot/provisioning-iam-policy.json
 ```
-sudo apt update
-sudo apt install git -y
+
+Then attach it to your IAM user, group, or SSO permission set.
+
+---
+
+## Option 1: Local-to-Remote Setup (Recommended)
+
+This approach runs AWS provisioning from your local machine using AWS SSO (or any configured credentials), then deploys everything to the Pi over SSH. No AWS credentials are ever stored on the Pi.
+
+### Step 1: Clone this repo (on your local machine)
+
+```bash
+git clone https://github.com/dave-malone/aws-kvs-webrtc-demo-for-raspberry-pi
+cd aws-kvs-webrtc-demo-for-raspberry-pi
 ```
 
-## Obtain AWS credentials
+### Step 2: Configure AWS credentials
 
-The scripts in this project make use of the AWS CLI in order to provision resources into your AWS account. To use these scripts, create a temporary AWS key pair and set these as environment variables on your Pi. These will only be used to provision your initial set of AWS Cloud resources and can be discarded after the subsequent steps have successfully completed. Follow these instructions to create an AWS access key: https://repost.aws/knowledge-center/create-access-key.
+If you use AWS IAM Identity Center (SSO), run the setup helper:
 
-Then, set your AWS access key as environment variables in your Raspberry Pi device:
-
+```bash
+./setup-aws-sso.sh myprofile
 ```
-export AWS_ACCESS_KEY_ID= <AWS account access key>
-export AWS_SECRET_ACCESS_KEY= <AWS account secret key>
+
+This walks you through `aws configure sso` interactively. You'll need your Identity Center start URL, account ID, and role name.
+
+If you already have a working AWS CLI profile (SSO, IAM user, or otherwise), skip this step.
+
+### Step 3: Log in
+
+```bash
+aws sso login --profile myprofile
+```
+
+### Step 4: Provision and deploy
+
+```bash
+./provision-local.sh \
+  --profile myprofile \
+  --pi-host pi@192.168.1.100 \
+  --thing-name MyCameraDevice
+```
+
+This single command will:
+1. Verify prerequisites (AWS CLI v2, jq, ssh, scp, curl) and AWS session
+2. Create the IoT Thing, IAM role, IoT policies, and device certificates locally
+3. SCP the certificates and configuration to the Pi
+4. SSH into the Pi to install dependencies, build libwebsockets and the SDK, and start the systemd service
+
+### Step 5: Verify
+
+```bash
+ssh pi@192.168.1.100 'sudo systemctl status kvs-webrtc.service'
+```
+
+---
+
+## Option 2: All-on-Pi Setup (Legacy)
+
+This approach runs everything directly on the Raspberry Pi. It requires temporary AWS access keys on the device.
+
+### Obtain AWS credentials
+
+Create a temporary AWS access key pair ([instructions](https://repost.aws/knowledge-center/create-access-key)) and set them on your Pi:
+
+```bash
+export AWS_ACCESS_KEY_ID=<your-access-key>
+export AWS_SECRET_ACCESS_KEY=<your-secret-key>
 export AWS_DEFAULT_REGION=us-east-1
 ```
 
-## Using this repostiory to provision your Raspberry Pi for use with Amazon Kinesis Video Streams for WebRTC
+### Clone and run
 
-Clone this repo:
-
-`git clone --recurse-submodules https://github.com/dave-malone/aws-kvs-webrtc-demo-for-raspberry-pi`
-
-Run the easy install script. Please note that this script will install packages on your Raspberry Pi, will clone and build the amazon-kinesis-video-streams-webrtc-sdk-c, and will also provision AWS Cloud resources on your behalf. Installing packages and building the webrtc sdk will take some time, so please be patient.
-
-The `easy_install` script can be passed the AWS IoT Core Thing Name as an argument. If you do not set this, the script will prompt and wait for you to enter a Thing Name before proceeding. 
-
-```
+```bash
+git clone --recurse-submodules https://github.com/dave-malone/aws-kvs-webrtc-demo-for-raspberry-pi
 cd aws-kvs-webrtc-demo-for-raspberry-pi
 ./easy_install.sh YOUR_THING_NAME
 ```
 
-Upon successful completion, a new service named `kvs-webrtc.service` will be registered. You can check the status of this service by running the following command: 
-`sudo systemctl status kvs-webrtc.service`. 
+**Important:** Delete the temporary AWS access key pair after setup completes.
 
-The sample applications have been installed under `/opt/amazon-kinesis-video-streams-webrtc-sdk-c`. The service will direct Stdout and Stderror logs to `/var/log/kvs-webrtc.log`, and service specific logs are in the usual `tail -f /var/log/syslog` file.
+---
 
-Once the demo program is working, you can login to your AWS Console, navigate to Kinesis Video Streams > Signaling channels, and click the link for the signaling channel with the same name you provided to your IoT Thing during the `easy_install` process. This will allow you to view your camera's live feed in the browser to verify that everything is working as expected.
+## Test your camera
 
-## Test your camera device
+Once the service is running, navigate to the [KVS WebRTC Test Page](https://awslabs.github.io/amazon-kinesis-video-streams-webrtc-sdk-js/examples/index.html), enter your AWS region, credentials, and device name, then click "Start Viewer" to see a live feed.
 
-As long as your Raspberry Pi shows that the service is successfully running (see steps above), you can navigate to the KVS WebRTC Test Page, enter in your AWS region, AWS credentials, and the name of your device used in the previous steps, and click the "Start Viewer" button. If everything is working, you will be able to view a live feed from your camera!
+## Service management
 
-https://awslabs.github.io/amazon-kinesis-video-streams-webrtc-sdk-js/examples/index.html
+```bash
+# Check status
+sudo systemctl status kvs-webrtc.service
 
-## Clean up 
+# View logs
+tail -f /var/log/kvs-webrtc.log
 
-Ensure that you have deleted the AWS access key pair used to initially provision your Raspberry Pi device, as it is no longer needed. 
+# Restart
+sudo systemctl restart kvs-webrtc.service
+```
+
+## Clean up
+
+To remove the KVS WebRTC installation from the Pi:
+
+```bash
+# Run on the Pi (or via SSH)
+sudo systemctl stop kvs-webrtc.service
+sudo systemctl disable kvs-webrtc.service
+sudo rm /etc/systemd/system/kvs-webrtc.service
+sudo systemctl daemon-reload
+sudo rm -rf /opt/amazon-kinesis-video-streams-webrtc-sdk-c
+```
+
+If using the legacy approach, ensure you have deleted the temporary AWS access key pair.
+
+---
+
+## Customizing the GStreamer pipeline
+
+The SDK samples use a GStreamer pipeline to capture video from the camera and encode it for WebRTC streaming. By default, the setup scripts patch the SDK to read the pipeline from environment variables, so you can change resolution, framerate, encoder settings, or even the camera source without recompiling.
+
+Two environment variables are supported:
+
+| Variable | Used when | Required appsink names |
+|---|---|---|
+| `KVS_GST_VIDEO_PIPELINE` | Video-only streaming | `appsink-video` |
+| `KVS_GST_AUDIO_VIDEO_PIPELINE` | Audio+video streaming | `appsink-video` and `appsink-audio` |
+
+If the variable is not set or empty, the SDK falls back to its built-in default pipeline.
+
+The pipeline is configured in the run script at `/opt/amazon-kinesis-video-streams-webrtc-sdk-c/run-kvs-webrtc-client-master-sample.sh`. Edit the `KVS_GST_VIDEO_PIPELINE` line and restart the service:
+
+```bash
+sudo nano /opt/amazon-kinesis-video-streams-webrtc-sdk-c/run-kvs-webrtc-client-master-sample.sh
+sudo systemctl restart kvs-webrtc.service
+```
+
+### Default pipeline (Raspberry Pi with libcamera)
+
+```
+libcamerasrc ! video/x-raw,width=1280,height=720,framerate=30/1 !
+  queue ! videoconvert ! video/x-raw,format=I420 !
+  x264enc bframes=0 speed-preset=veryfast bitrate=512 byte-stream=TRUE
+    tune=zerolatency key-int-max=30 !
+  video/x-h264,stream-format=byte-stream,alignment=au !
+  appsink sync=TRUE emit-signals=TRUE name=appsink-video
+```
+
+### Example: lower resolution for reduced CPU usage
+
+```
+libcamerasrc ! video/x-raw,width=640,height=480,framerate=15/1 !
+  queue ! videoconvert ! video/x-raw,format=I420 !
+  x264enc bframes=0 speed-preset=ultrafast bitrate=256 byte-stream=TRUE
+    tune=zerolatency key-int-max=15 !
+  video/x-h264,stream-format=byte-stream,alignment=au !
+  appsink sync=TRUE emit-signals=TRUE name=appsink-video
+```
+
+### Example: test pattern (no camera needed)
+
+```
+videotestsrc is-live=TRUE pattern=ball !
+  video/x-raw,width=1280,height=720,framerate=30/1 !
+  queue ! videoconvert ! video/x-raw,format=I420 !
+  x264enc bframes=0 speed-preset=veryfast bitrate=512 byte-stream=TRUE
+    tune=zerolatency key-int-max=30 !
+  video/x-h264,stream-format=byte-stream,alignment=au !
+  appsink sync=TRUE emit-signals=TRUE name=appsink-video
+```
+
+### Tips
+
+- Use `gst-launch-1.0 <your pipeline elements> ! fakesink` to test a pipeline before putting it in the run script
+- The pipeline must be a single string on one line in the run script (no line breaks)
+- The `appsink` element names (`appsink-video`, `appsink-audio`) must match exactly — the SDK uses these names to pull frames
+
+---
+
+## Tested configurations
+
+| Raspberry Pi Model | OS | Architecture | Kernel | Status |
+|---|---|---|---|---|
+| Raspberry Pi 4 Model B | Raspbian Bookworm (12) | armhf (32-bit userspace) | 6.12 aarch64 | Tested, working |
+| Raspberry Pi 4 Model B | Raspberry Pi OS Bookworm (12) | arm64 (64-bit) | — | Untested, may have issues |
+| Raspberry Pi 5 | — | — | — | Untested |
+| Raspberry Pi 3 / Zero 2 W | — | — | — | Untested |
+
+**Notes:**
+- The 32-bit (armhf) Raspbian image is the tested configuration. The 64-bit (arm64) Raspberry Pi OS image may have different package names or library paths — if you test it, please report your results.
+- Older OS versions (Bullseye and earlier) use the legacy camera stack (`raspistill`, `v4l2`) instead of `libcamera`. The GStreamer pipeline patch in `setup-pi.sh` targets Bookworm's `libcamerasrc` and will not work on Bullseye without modification.
+
+---
+
+## Troubleshooting
+
+### Wi-Fi not connecting after flashing with Raspberry Pi Imager
+
+On recent Bookworm images, the Wi-Fi configuration set through Raspberry Pi Imager (or `raspi-config`) may not apply correctly. NetworkManager has replaced `wpa_supplicant` as the default network manager, and the old configuration methods don't always work.
+
+**Workaround:** Connect a monitor, keyboard, and mouse to the Pi, then use `nmtui` to configure Wi-Fi:
+
+```bash
+sudo nmtui
+```
+
+Select "Activate a connection", choose your Wi-Fi network, and enter the password. Once connected, you can find the Pi's IP address with `hostname -I` and switch to SSH for the remaining setup.
+
+### No camera detected
+
+If `setup-pi.sh` reports "No camera detected by libcamera":
+
+1. **Check the ribbon cable** — ensure it's firmly seated at both the camera module and the Pi's CSI port, with the contacts facing the correct direction
+2. **Verify boot config** — check that `camera_auto_detect=1` is present in `/boot/firmware/config.txt` (or `/boot/config.txt` on older images)
+3. **Reboot** after any config changes: `sudo reboot`
+4. **Test manually:**
+   ```bash
+   rpicam-hello --list-cameras
+   ```
+   You should see at least one camera listed with its supported modes.
+
+### Peer connection established but no video
+
+If the KVS WebRTC test page shows a peer connection but no video feed:
+
+- Check the application logs for GStreamer errors:
+  ```bash
+  grep -i 'error\|pipeline\|gstreamer' /var/log/kvs-webrtc.log | tail -20
+  ```
+- Look for kernel errors related to the camera:
+  ```bash
+  dmesg | grep -i 'unicam\|camera\|csi' | tail -10
+  ```
+- A common cause is the `Wrong width or height` error in `dmesg`, which means the GStreamer pipeline is trying to open the camera at a resolution the sensor doesn't natively support. This is fixed by the `libcamerasrc` patch in `setup-pi.sh`. If you see this error, rebuild the SDK:
+  ```bash
+  rm -rf ~/kvs-webrtc-setup/amazon-kinesis-video-streams-webrtc-sdk-c/build
+  ~/kvs-webrtc-setup/setup-pi.sh
+  ```
+
+### Service fails to start
+
+```bash
+sudo systemctl status kvs-webrtc.service
+journalctl -u kvs-webrtc.service --no-pager -n 50
+```
+
+Common causes:
+- **Missing IoT certificates** — verify files exist under `/opt/amazon-kinesis-video-streams-webrtc-sdk-c/iot/certs/`
+- **Wrong region** — check that `AWS_DEFAULT_REGION` in the run script matches where your IoT resources were provisioned
+- **Clock skew** — TLS connections will fail if the Pi's clock is significantly off. Install and enable NTP: `sudo apt install ntp`
