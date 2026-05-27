@@ -145,7 +145,65 @@ cd aws-kvs-webrtc-demo-for-raspberry-pi
 
 ## Test your camera
 
-Once the service is running, navigate to the [KVS WebRTC Test Page](https://awslabs.github.io/amazon-kinesis-video-streams-webrtc-sdk-js/examples/index.html), enter your AWS region, credentials, and device name, then click "Start Viewer" to see a live feed.
+Once the service is running, you can view the stream using the [KVS WebRTC Test Page](https://awslabs.github.io/amazon-kinesis-video-streams-webrtc-sdk-js/examples/index.html).
+
+### Viewer credentials
+
+The test page requires AWS credentials for a user or role that can connect as a **viewer** to the signaling channel. This is a different set of permissions from the provisioning user or the Pi's IoT role.
+
+The viewer needs the following IAM permissions:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "kinesisvideo:DescribeSignalingChannel",
+        "kinesisvideo:GetSignalingChannelEndpoint",
+        "kinesisvideo:GetIceServerConfig",
+        "kinesisvideo:ConnectAsViewer"
+      ],
+      "Resource": "arn:aws:kinesisvideo:*:*:channel/*"
+    }
+  ]
+}
+```
+
+You can scope the `Resource` to a specific channel (e.g. `arn:aws:kinesisvideo:us-east-1:123456789012:channel/rpi_192-168-4-72/*`) for tighter security.
+
+**Options for viewer credentials:**
+
+1. **Use your existing SSO/admin credentials** — simplest for testing, just enter your access key and secret key on the test page
+2. **Create a dedicated viewer IAM user** — better for sharing with others or long-term use:
+   ```bash
+   aws iam create-user --profile work --user-name kvs-webrtc-viewer
+   aws iam put-user-policy --profile work --user-name kvs-webrtc-viewer \
+     --policy-name KVSViewerPolicy \
+     --policy-document '{
+       "Version": "2012-10-17",
+       "Statement": [{
+         "Effect": "Allow",
+         "Action": [
+           "kinesisvideo:DescribeSignalingChannel",
+           "kinesisvideo:GetSignalingChannelEndpoint",
+           "kinesisvideo:GetIceServerConfig",
+           "kinesisvideo:ConnectAsViewer"
+         ],
+         "Resource": "arn:aws:kinesisvideo:*:*:channel/*"
+       }]
+     }'
+   aws iam create-access-key --profile work --user-name kvs-webrtc-viewer
+   ```
+
+### Using the test page
+
+1. Open the [KVS WebRTC Test Page](https://awslabs.github.io/amazon-kinesis-video-streams-webrtc-sdk-js/examples/index.html)
+2. Enter your AWS region (e.g. `us-east-1`)
+3. Enter the Access Key ID and Secret Access Key for your viewer credentials
+4. Enter the channel name (same as your IoT Thing name, e.g. `rpi_192-168-4-72`)
+5. Click **Start Viewer**
 
 ## Service management
 
