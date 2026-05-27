@@ -288,13 +288,15 @@ This is significantly more complex than one-way streaming and is not configured 
 | Raspberry Pi Model | OS | Architecture | Kernel | Status |
 |---|---|---|---|---|
 | Raspberry Pi 4 Model B | Raspbian Bookworm (12) | armhf (32-bit userspace) | 6.12 aarch64 | Tested, working |
+| Raspberry Pi Zero 2 W | Raspbian Trixie (13) | armhf (32-bit userspace) | 6.12 armv7l | Tested, working |
 | Raspberry Pi 4 Model B | Raspberry Pi OS Bookworm (12) | arm64 (64-bit) | — | Untested, may have issues |
 | Raspberry Pi 5 | — | — | — | Untested |
-| Raspberry Pi 3 / Zero 2 W | — | — | — | Untested |
+| Raspberry Pi 3 | — | — | — | Untested |
 
 **Notes:**
 - The 32-bit (armhf) Raspbian image is the tested configuration. The 64-bit (arm64) Raspberry Pi OS image may have different package names or library paths — if you test it, please report your results.
-- Older OS versions (Bullseye and earlier) use the legacy camera stack (`raspistill`, `v4l2`) instead of `libcamera`. The GStreamer pipeline patch in `setup-pi.sh` targets Bookworm's `libcamerasrc` and will not work on Bullseye without modification.
+- Trixie (Debian 13) on armhf requires building `usrsctp` from source due to type signature mismatches with the system package. The `setup-pi.sh` script detects this automatically.
+- Older OS versions (Bullseye and earlier) use the legacy camera stack (`raspistill`, `v4l2`) instead of `libcamera`. The GStreamer pipeline patch in `setup-pi.sh` targets Bookworm/Trixie's `libcamerasrc` and will not work on Bullseye without modification.
 
 ---
 
