@@ -237,6 +237,52 @@ videotestsrc is-live=TRUE pattern=ball !
 
 ---
 
+## What's tested (and what's not)
+
+This repo is tested with **one-way video streaming from the Pi to a browser viewer**. Specifically:
+
+- Video-only, Pi → cloud → browser viewer (using the KVS WebRTC test page)
+- Camera auto-detection with fallback to test pattern
+- IoT Core credential provider for authentication
+
+### Not tested but possible: audio + video streaming
+
+To stream audio alongside video from the Pi, you would need:
+
+1. A USB microphone or audio input device connected to the Pi
+2. Set `KVS_GST_AUDIO_VIDEO_PIPELINE` instead of `KVS_GST_VIDEO_PIPELINE`
+
+Example pipeline (untested):
+
+```
+libcamerasrc ! video/x-raw,width=1280,height=720,framerate=30/1 !
+  queue ! videoconvert ! video/x-raw,format=I420 !
+  x264enc bframes=0 speed-preset=veryfast bitrate=512 byte-stream=TRUE
+    tune=zerolatency key-int-max=30 !
+  video/x-h264,stream-format=byte-stream,alignment=au !
+  appsink sync=TRUE emit-signals=TRUE name=appsink-video
+alsasrc device=hw:0 !
+  queue leaky=2 max-size-buffers=400 !
+  audioconvert ! audioresample !
+  opusenc !
+  audio/x-opus,rate=48000,channels=2 !
+  appsink sync=TRUE emit-signals=TRUE name=appsink-audio
+```
+
+Note: this is a single pipeline string with both video and audio branches. The `alsasrc device=hw:0` would need to match your actual audio device (check with `arecord -l`).
+
+### Not tested: bidirectional audio/video
+
+WebRTC supports bidirectional media, and the SDK sample application includes a `receiveGstreamerAudioVideo` function for handling incoming media. To use bidirectional streaming, you would need:
+
+1. A speaker connected to the Pi (for receiving audio)
+2. A display connected to the Pi (for receiving video) — the Pi cannot be headless
+3. Modifications to the SDK sample application to route received media to appropriate GStreamer sinks (e.g. `alsasink` for audio, `autovideosink` for video)
+
+This is significantly more complex than one-way streaming and is not configured or tested by the scripts in this repo.
+
+---
+
 ## Tested configurations
 
 | Raspberry Pi Model | OS | Architecture | Kernel | Status |
