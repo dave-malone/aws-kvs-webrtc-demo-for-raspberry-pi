@@ -61,6 +61,8 @@ aws iam create-policy \
 
 Then attach it to your IAM user, group, or SSO permission set.
 
+**Note:** KVS signaling channel permissions (`CreateSignalingChannel`, `ConnectAsMaster`, etc.) are not needed by the provisioning user. Those permissions are granted to the IoT role (`KVSCameraCertificateBasedIAMRole`) which the Pi assumes at runtime via the IoT credential provider. See [`iot/iam-permission-document.json`](iot/iam-permission-document.json) for the runtime permissions.
+
 ---
 
 ## Option 1: Local-to-Remote Setup (Recommended)
