@@ -286,31 +286,12 @@ echo ""
 
 echo "=== Generating run script ==="
 
-cat > "${STAGING_DIR}/run-kvs-webrtc-client-master-sample.sh" <<RUNEOF
-#!/bin/bash
-KVS_SDK_HOME=${KVS_INSTALL_DIR}
-
-export AWS_DEFAULT_REGION=${AWS_REGION}
-export AWS_IOT_CORE_CREDENTIAL_ENDPOINT=${CREDENTIAL_ENDPOINT}
-export AWS_IOT_CORE_ROLE_ALIAS=${IOT_ROLE_ALIAS}
-export AWS_IOT_CORE_THING_NAME=${THING_NAME}
-
-export AWS_IOT_CORE_CERT=\${KVS_SDK_HOME}/iot/certs/device.cert.pem
-export AWS_IOT_CORE_PRIVATE_KEY=\${KVS_SDK_HOME}/iot/certs/device.private.key
-export IOT_CA_CERT_PATH=\${KVS_SDK_HOME}/iot/certs/root-CA.crt
-export AWS_KVS_CACERT_PATH=\${KVS_SDK_HOME}/certs/cert.pem
-
-export DEBUG_LOG_SDP=TRUE
-export AWS_KVS_LOG_LEVEL=1
-export AWS_ENABLE_FILE_LOGGING=TRUE
-
-# GStreamer pipeline for video-only streaming (libcamerasrc for Raspberry Pi cameras).
-# Edit this to change resolution, framerate, encoder settings, etc. without recompiling.
-# The pipeline MUST end with: appsink sync=TRUE emit-signals=TRUE name=appsink-video
-export KVS_GST_VIDEO_PIPELINE="libcamerasrc ! video/x-raw,width=1280,height=720,framerate=30/1 ! queue ! videoconvert ! video/x-raw,format=I420 ! x264enc bframes=0 speed-preset=veryfast bitrate=512 byte-stream=TRUE tune=zerolatency key-int-max=30 ! video/x-h264,stream-format=byte-stream,alignment=au ! appsink sync=TRUE emit-signals=TRUE name=appsink-video"
-
-\${KVS_SDK_HOME}/build/samples/kvsWebrtcClientMasterGstSample ${THING_NAME}
-RUNEOF
+sed -e "s|__KVS_INSTALL_DIR__|${KVS_INSTALL_DIR}|g" \
+    -e "s|__AWS_REGION__|${AWS_REGION}|g" \
+    -e "s|__CREDENTIAL_ENDPOINT__|${CREDENTIAL_ENDPOINT}|g" \
+    -e "s|__IOT_ROLE_ALIAS__|${IOT_ROLE_ALIAS}|g" \
+    -e "s|__THING_NAME__|${THING_NAME}|g" \
+    "${SCRIPT_DIR}/run-kvs-webrtc-template.sh" > "${STAGING_DIR}/run-kvs-webrtc-client-master-sample.sh"
 
 chmod 755 "${STAGING_DIR}/run-kvs-webrtc-client-master-sample.sh"
 
