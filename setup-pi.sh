@@ -6,9 +6,8 @@
 # Installs system dependencies, clones and builds the KVS WebRTC SDK,
 # and installs the systemd service.
 #
-# Uses BUILD_DEPENDENCIES=OFF to speed up compilation by relying on
-# system packages for libsrtp and libusrsctp. libwebsockets is built
-# from source because the SDK requires v4.3.5 and Bookworm ships 4.1.6.
+# Supports Raspberry Pi OS Bookworm (Debian 12) and Trixie (Debian 13).
+# Detects the OS version and adjusts the build accordingly.
 #
 
 set -euo pipefail
@@ -21,28 +20,48 @@ LWS_VERSION="v4.3.5"
 echo "=== Raspberry Pi Setup ==="
 echo ""
 
+# ─── Detect OS version ───────────────────────────────────────────────────────
+
+OS_VERSION_ID=$(grep VERSION_ID /etc/os-release | cut -d= -f2 | tr -d '"')
+OS_CODENAME=$(grep VERSION_CODENAME /etc/os-release | cut -d= -f2)
+ARCH=$(dpkg --print-architecture)
+
+echo "Detected: ${OS_CODENAME} (Debian ${OS_VERSION_ID}), architecture: ${ARCH}"
+
+# Trixie (13+) has usrsctp type signature issues on armhf — need to build from source
+BUILD_USRSCTP_FROM_SOURCE=false
+SDK_EXTRA_C_FLAGS=""
+
+if [[ "${OS_VERSION_ID}" -ge 13 ]] && [[ "${ARCH}" == "armhf" ]]; then
+  BUILD_USRSCTP_FROM_SOURCE=true
+  SDK_EXTRA_C_FLAGS="-Wno-incompatible-pointer-types"
+  echo "Note: Trixie on armhf detected — will build usrsctp from source"
+fi
+
+echo ""
+
 # ─── Install system dependencies ─────────────────────────────────────────────
 
 echo "=== Installing system packages ==="
 sudo apt-get update -qq
-sudo apt-get install -y \
-  git \
-  cmake \
-  pkg-config \
-  libssl-dev \
-  libmbedtls-dev \
-  libcurl4-openssl-dev \
-  liblog4cplus-dev \
-  libsrtp2-dev \
-  libusrsctp-dev \
-  libgstreamer1.0-dev \
-  libgstreamer-plugins-base1.0-dev \
-  gstreamer1.0-plugins-base-apps \
-  gstreamer1.0-plugins-bad \
-  gstreamer1.0-plugins-good \
-  gstreamer1.0-plugins-ugly \
-  gstreamer1.0-tools \
-  gstreamer1.0-libcamera
+
+# Base packages for all versions
+PACKAGES=(
+  git cmake pkg-config
+  libssl-dev libmbedtls-dev libcurl4-openssl-dev liblog4cplus-dev
+  libsrtp2-dev
+  libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
+  gstreamer1.0-plugins-base-apps gstreamer1.0-plugins-bad
+  gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly
+  gstreamer1.0-tools gstreamer1.0-libcamera
+)
+
+# On Bookworm, system libusrsctp works fine
+if [[ "${BUILD_USRSCTP_FROM_SOURCE}" == "false" ]]; then
+  PACKAGES+=(libusrsctp-dev)
+fi
+
+sudo apt-get install -y "${PACKAGES[@]}"
 
 echo ""
 
@@ -67,10 +86,14 @@ if [[ -n "${BOOT_CONFIG}" ]]; then
     echo "  dtoverlay for your camera module (e.g. dtoverlay=imx219)."
     echo "  Then reboot before running this script again."
     echo ""
-    read -p "Continue anyway? [y/N] " -n 1 -r
-    echo ""
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-      exit 1
+    if [[ -t 0 ]]; then
+      read -p "Continue anyway? [y/N] " -n 1 -r
+      echo ""
+      if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        exit 1
+      fi
+    else
+      echo "Non-interactive mode: continuing anyway."
     fi
   fi
 else
@@ -87,7 +110,7 @@ fi
 
 if [[ "${CAMERA_COUNT}" -eq 0 ]]; then
   echo ""
-  echo "ERROR: No camera detected by libcamera."
+  echo "WARNING: No camera detected by libcamera."
   echo ""
   echo "Troubleshooting steps:"
   echo "  1. Verify the camera ribbon cable is firmly seated at both ends"
@@ -97,10 +120,14 @@ if [[ "${CAMERA_COUNT}" -eq 0 ]]; then
   echo "  4. Reboot after making any changes: sudo reboot"
   echo "  5. Test with: rpicam-hello --list-cameras"
   echo ""
-  read -p "Continue without a detected camera? [y/N] " -n 1 -r
-  echo ""
-  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    exit 1
+  if [[ -t 0 ]]; then
+    read -p "Continue without a detected camera? [y/N] " -n 1 -r
+    echo ""
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+      exit 1
+    fi
+  else
+    echo "Non-interactive mode: continuing without camera."
   fi
 else
   echo "Camera detected (${CAMERA_COUNT} camera(s) found)."
@@ -116,7 +143,7 @@ fi
 echo ""
 
 # ─── Build libwebsockets from source ─────────────────────────────────────────
-# The SDK requires libwebsockets v4.3.5 but Bookworm only ships 4.1.6.
+# The SDK requires libwebsockets v4.3.5 but Trixie/Bookworm only ships 4.1.6.
 # Build it once and install to /usr/local so the SDK can find it.
 
 LWS_MARKER="/usr/local/lib/pkgconfig/libwebsockets.pc"
@@ -147,6 +174,41 @@ else
   cd "${WORK_DIR}"
 
   echo "libwebsockets ${LWS_VERSION} installed to /usr/local"
+fi
+
+# ─── Build usrsctp from source (Trixie armhf only) ──────────────────────────
+# The system libusrsctp on Trixie has callback signature mismatches with the SDK.
+# Build the exact version the SDK expects.
+
+if [[ "${BUILD_USRSCTP_FROM_SOURCE}" == "true" ]]; then
+  USRSCTP_COMMIT="1ade45cbadfd19298d2c47dc538962d4425ad2dd"
+  USRSCTP_MARKER="/usr/local/lib/libusrsctp.a"
+  if [[ -f "${USRSCTP_MARKER}" ]]; then
+    echo "=== usrsctp already built, skipping ==="
+  else
+    echo "=== Building usrsctp from source ==="
+    USRSCTP_SRC_DIR="${WORK_DIR}/usrsctp"
+
+    if [[ ! -d "${USRSCTP_SRC_DIR}" ]]; then
+      git clone https://github.com/sctplab/usrsctp.git "${USRSCTP_SRC_DIR}"
+    fi
+
+    cd "${USRSCTP_SRC_DIR}"
+    git checkout "${USRSCTP_COMMIT}"
+    mkdir -p build
+    cd build
+    cmake .. \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_C_FLAGS="-Wno-error" \
+      -Dsctp_werror=OFF \
+      -Dsctp_build_programs=OFF
+    make -j$(nproc)
+    sudo make install
+    sudo ldconfig
+    cd "${WORK_DIR}"
+
+    echo "usrsctp installed to /usr/local"
+  fi
 fi
 
 echo ""
@@ -180,10 +242,18 @@ fi
 echo "=== Building SDK with BUILD_DEPENDENCIES=OFF ==="
 mkdir -p "${SDK_SRC_DIR}/build"
 cd "${SDK_SRC_DIR}/build"
-cmake .. \
-  -DBUILD_DEPENDENCIES=OFF \
-  -DIOT_CORE_ENABLE_CREDENTIALS=ON \
+
+CMAKE_ARGS=(
+  -DBUILD_DEPENDENCIES=OFF
+  -DIOT_CORE_ENABLE_CREDENTIALS=ON
   -DCMAKE_PREFIX_PATH=/usr/local
+)
+
+if [[ -n "${SDK_EXTRA_C_FLAGS}" ]]; then
+  CMAKE_ARGS+=(-DCMAKE_C_FLAGS="${SDK_EXTRA_C_FLAGS}")
+fi
+
+cmake .. "${CMAKE_ARGS[@]}"
 make -j$(nproc)
 cd "${WORK_DIR}"
 
